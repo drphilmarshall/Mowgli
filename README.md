@@ -10,6 +10,8 @@ Online at **http://ephysics.org/mowgli**
 
 ### Standalone app
 
+![Mowgli in action](https://github.com/drphilmarshall/Mowgli/edit/master/doc/figs/applet-schematic.png)
+
 Compile and run with:
 
     javac *.java

@@ -10,7 +10,7 @@ Online at **http://ephysics.org/mowgli**
 
 ### Standalone app
 
-![Mowgli in action](https://github.com/drphilmarshall/Mowgli/edit/master/doc/figs/applet-schematic.png)
+![Mowgli in action](https://github.com/drphilmarshall/Mowgli/blob/master/doc/figs/applet-schematic.png)
 
 Compile and run with:
 

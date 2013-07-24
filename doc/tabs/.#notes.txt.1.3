@@ -1,0 +1,137 @@
+# 2011-02-22 (Tuesday) 12:53 GMT
+# 
+# Magnifications for lenses in the SLACS survey - from Newton et al 2011:
+# 
+
+echo '# Lens magnifications for the SLACS sample (the subset with simple sources)\
+# \
+# Source: Newton et al 2011, Table 1\
+# \
+#     lens    mu' > SLACS_magnifications.cat
+
+cat ~/work/latex/papers/SLACS-sources/tables/sources-observed.tex | \
+    grep J | cut -d'&' -f1,10 | \
+    sed s%'\\'%%g | sed s/'&'//g | sed s%'\$'%%g >> SLACS_magnifications.cat
+
+# How about thetaE? From SLACS catalog 
+# (Auger et al 2009, http://iopscience.iop.org/0004-637X/705/2/1099)
+
+# Errors on magnifications and einstein radii?
+
+# Newton et al give 0.3 mags error on source photometry, so 30% error on mu
+# Likewise, they say sigma_SIE is known to about 2%, so 4% on thetaE
+# SLACS paper 9 has these numbers exactly - download!
+
+wget -O slacs9_table3.txt \
+  http://iopscience.iop.org/0004-637X/705/2/1099/apj326624t3_ascii.txt
+  
+wget -O slacs9_table4.txt \
+  http://iopscience.iop.org/0004-637X/705/2/1099/apj326624t4_ascii.txt
+
+# Pull out Rein, zd, and compute Rein error assuming 4%:
+
+grep SDSS slacs9_table3.txt | sed s/' - '/'-'/g | sed s/' + '/'+'/g | \
+  awk '{print $1,$4}' > slacs9_name+zd.txt
+
+grep SDSS slacs9_table4.txt | sed s/' - '/'-'/g | sed s/' + '/'+'/g | \
+  awk '{print $1,$2,0.04*$2}' > slacs9_name+Rein.txt
+
+echo "#  name     zd     Rein    Rein_err" > slacs9.cat
+paste slacs9_name+zd.txt slacs9_name+Rein.txt | \
+  sed s/SDSS//g | grep -v '\.\.\.' | \
+  awk '{print $1,$2,$4,$5}' >> slacs9.cat
+
+# Now go through simple subset pulling out Zd, looking up D, computing thetaE:
+
+# First need distance lookup table:
+
+\rm -f D-z.txt
+foreach i ( `seq 101` )
+  set z = `echo $i | awk '{print ($1-1)*0.01}'`
+  set D = `echo "0.3,0.7,$z,3.0" | FRWDistances | \
+             grep 'observer to object no. 1' | cut -d':' -f2 | \
+             awk '{print $1/0.7}'`
+  echo "  $z   $D" >>  D-z.txt
+  tail -1 D-z.txt
+end
+
+echo '# Lens Einstein radii (arcsec) and magnifications for \
+# the SLACS sample (the subset of 43 with well-measured, simple sources)\
+# \
+# Sources: \
+#   Auger et al 2009, Table 3, 4\
+#   Newton et al 2011, Table 1\
+# \
+# lens           zd  REin  errREin      Dd   thEin  errthEin     mu  errmu' > SLACS.cat
+
+set rad2sec = `echo "3600*180/3.141592654" | bc -l`
+foreach lens ( `grep -v '#' SLACS_magnifications.cat | awk '{print $1}'`)
+  set x = `grep $lens slacs9.cat`
+  set y = `grep $lens SLACS_magnifications.cat`
+  if ($#x > 0) then 
+    set Dd = `readoff.pl -x $x[2] D-z.txt`
+    echo "$x $Dd  $rad2sec $y[2]" | \
+      awk '{print $1,$2,$3,$4,$5,($3*$6)/($5*1000.0),($4*$6)/($5*1000.0),$7,$7*0.3}' | \
+      awk '{printf "%s %.3f %.2f %.2f %.1f %.3f %.3f %.1f %.1f\n",$1,$2,$3,$4,$5,$6,$7,$8,$9}' | \
+      awk '{printf "  %10s  %5s  %4s     %4s  %6s   %5s     %5s  %5s   %4s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9}' >> SLACS.cat 
+  endif
+end
+
+
+# OK, now get SL2S groups and rings:
+
+cat ~/work/latex/papers/SL2S/Groups-I/0812.1033v1/table.tex | grep J | \
+  grep '&' | cut -d'&' -f1,4,5 | sed s/'&'//g | sed s/'\$\\sim'//g | \
+  sed s/'\$\\pm\$'/'  '/g | sed s/'\$'//g | \
+  cut -c1-5,7-12,13- > SL2S-groups_Rein.txt
+# Edit to add missing errors... Used 1.5 as fiducial error on REin.
+# Apparent radii:
+
+echo '# Lens Einstein radii for the SL2S group lens sample \
+# \
+# Source: \
+#   Limousin et al 2009, Table 1\
+# Comments: \
+#   R in kpc, theta in arcsec \
+# \
+# lens           zd   REin  errREin      Dd   thEin  errthEin' > SL2S-groups.cat
+set rad2sec = `echo "3600*180/3.141592654" | bc -l`
+foreach lens ( `grep -v '#' SL2S-groups_Rein.txt | awk '{print $1}'`)
+  set x = `grep $lens SL2S-groups_Rein.txt`
+# x = lens,z,Rein,Reinerr  
+  set Dd = `readoff.pl -x $x[2] D-z.txt`
+  echo "$x $Dd  $rad2sec" | \
+    awk '{print $1,$2,$3*$5*1000.0/$6,$4*$5*1000.0/$6,$5,$3,$4}' | \
+    awk '{printf "%s %.3f %.1f %.1f %.1f %.3f %.3f\n",$1,$2,$3,$4,$5,$6,$7}' | \
+    awk '{printf "  %10s  %5s   %4s     %4s  %6s   %5s     %5s\n",$1,$2,$3,$4,$5,$6,$7}' >> SL2S-groups.cat 
+  endif
+end
+
+# Now do rings? From Andrea... 5% errors on Rein
+
+cat ~/work/latex/papers/SL2S/SL2S-Rings/tables/measuredtable.tex | grep J | \
+  grep '&' | cut -d'&' -f1,2,7 | sed s/'&'//g | sed s/'\$\\sim'//g | \
+  sed s/'\$\\pm\$'/'  '/g | sed s/'\$'//g | cut -c1-5,8-12,15- | \
+  grep -v ' - ' | awk '{print $1,$2,$3,$3*0.05}' > SL2S-rings_Rein.txt
+
+# Apparent radii:
+
+echo '# Lens Einstein radii for the SL2S group lens sample \
+# \
+# Source: \
+#   Ruff et al 2010, Table um\
+# Comments: \
+#   R in kpc, theta in arcsec \
+# \
+# lens           zd   REin  errREin      Dd   thEin  errthEin' > SL2S-rings.cat
+set rad2sec = `echo "3600*180/3.141592654" | bc -l`
+foreach lens ( `grep -v '#' SL2S-rings_Rein.txt | awk '{print $1}'`)
+  set x = `grep $lens SL2S-rings_Rein.txt`
+# x = lens,z,Rein,Reinerr  
+  set Dd = `readoff.pl -x $x[2] D-z.txt`
+  echo "$x $Dd  $rad2sec" | \
+    awk '{print $1,$2,$3*$5*1000.0/$6,$4*$5*1000.0/$6,$5,$3,$4}' | \
+    awk '{printf "%s %.3f %.2f %.2f %.1f %.3f %.3f\n",$1,$2,$3,$4,$5,$6,$7}' | \
+    awk '{printf "  %10s  %5s   %4s     %4s  %6s   %5s     %5s\n",$1,$2,$3,$4,$5,$6,$7}' >>  SL2S-rings.cat 
+  endif
+end

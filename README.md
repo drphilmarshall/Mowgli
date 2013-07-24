@@ -6,14 +6,14 @@ Can be run as a standalone java app, or as a web applet.
 
 ### Web version
 
-Online at [http://ephysics.org/mowgli]
+Online at **http://ephysics.org/mowgli**
 
 ### Standalone app
 
 Compile and run with:
 
-   javac *.java
-   java Standalone
+    javac *.java
+    java Standalone
 
 ### Authors
 
@@ -28,7 +28,7 @@ lives in the doc directory.
 ### License
 
 GPLv2. Please keep in touch if you do fork this repository - send Phil an
-email!
+email at dr.phil.marshall+mowgli@gmail.com!
 
 ### Dependencies
 
@@ -43,8 +43,8 @@ machine.
 
 Standalone app fails with:
 
-  Uncaught error fetching image:
-  java.lang.NullPointerException
+    Uncaught error fetching image:
+    java.lang.NullPointerException
           at sun.awt.image.URLImageSource.getConnection(URLImageSource.java:99)
           at sun.awt.image.URLImageSource.getDecoder(URLImageSource.java:113)
           at sun.awt.image.InputStreamImageSource.doFetch(InputStreamImageSource.java:240)

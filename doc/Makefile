@@ -1,7 +1,7 @@
 all: pdf
 
 clean:
-	\rm -f *.aux *.log *.dvi *.bbl *.blg paper.pdf paperNotes.bib
+	\rm -f *.aux *.log *.dvi *.bbl *.blg paperNotes.bib
 
 paper: pdf
 
